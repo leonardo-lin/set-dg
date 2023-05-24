@@ -1,5 +1,10 @@
 def bleu_score(candidate, references):
-    
+    """
+    Compute the BLEU score given a candidate and references
+    :param candidate: list of tokens
+    :param references: list of list of tokens
+    :return: BLEU score dict
+    """
     from nltk.translate.bleu_score import sentence_bleu
     bleu1_score=sentence_bleu(references,candidate,weights=(1,0,0,0))
     bleu2_score=sentence_bleu(references,candidate,weights=(0,1,0,0))
@@ -25,6 +30,11 @@ def bert_score(candidate, references):
     :return: BERT score dict
     """
 def bart_score(candidate):
+    """
+    Compute the BART score given a candidate
+    :param candidate: list of tokens
+    :return: BART score dict
+    """
     from bart_score import BARTScorer
     bart_scorer = BARTScorer(device='cuda', checkpoint='facebook/bart-large-cnn')
     tokens = ' '.join(map(str, candidate)) #make all the word into a sentence
@@ -33,7 +43,14 @@ def bart_score(candidate):
 
 
 def idf_bleu_score(candidate,reference,token):
-    #token = how many grams for bleu
+    
+    """
+    Compute the idf_BLEU score given a candidate and references
+    :param candidate: list of tokens
+    :param references: list of list of tokens
+    :param token: number of token in a gram
+    :return: BLEU score dict
+    """
     import re
     import json
     score=[]
