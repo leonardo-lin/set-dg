@@ -20,7 +20,17 @@ def rouge_score(candidate, references):
     :param references: list of list of tokens
     :return: ROUGE score dict
     """
-
+    from rouge import Rouge
+    rouge = Rouge()
+    candidate = ' '.join(map(str, candidate))
+    for i in range(len(references)):
+        references[i]=' '.join(map(str, references[i]))
+    max_score=0
+    for i in references:
+        score=rouge.get_scores(candidate,i)[0]['rouge-l']['f']
+        if score>max_score:
+            max_score=score
+    return max_score
 
 def bert_score(candidate, references):
     """
