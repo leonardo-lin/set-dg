@@ -6,7 +6,7 @@ def KDA_passage_score():
     import torch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #I don't know if it works or not but i just want to set the device
     dataset = load_dataset("voidful/set-dg") 
-    data_names=['eqg_race_f_dev','eqg_race_f_test','eqg_race_f_dev']
+    data_names=['eqg_race_f_dev','eqg_race_f_test']
     models=["allenai/unifiedqa-v2-t5-small-1251000","allenai/unifiedqa-v2-t5-base-1251000"]
     
     acc_score={}
@@ -25,7 +25,7 @@ def KDA_passage_score():
                     if have_passage == 0: #there is no passage for question
                         qainput=a_data['question']
                     else:                   # there is a passage for question
-                        qainput=a_data['passage']+' Question='+a_data['question']
+                        qainput=a_data['passage']+'\\n'+a_data['question']
                     options=a_data['options']
                     answer=a_data['answer']
                     output=uni_score.option_score(qainput,options)  #output the score
@@ -52,25 +52,25 @@ def KDA_passage_score():
 def del_distractor_score():                
     #刪掉一個distractor之後分數是多少
     import torch
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   #I don't know if it works or not but i just want to set the device
     import copy
     
     dataset = load_dataset("voidful/set-dg")
-    data_names=['eqg_race_f_dev','eqg_race_f_test','eqg_race_f_dev']
+    data_names=['eqg_race_f_dev','eqg_race_f_test']
     models=["allenai/unifiedqa-v2-t5-small-1251000","allenai/unifiedqa-v2-t5-base-1251000"]
     acc_score={}
     
-    for model in models:
+    for model in models:                #try small and base model to ompute the QA　score
         model_lib={}
         uni_score = UnifiedQA_Scorer(model_config=model)
-        for data_name in data_names:
+        for data_name in data_names:    #compute score on different data
             #data_lib={}
             count=0
             correct=0
             err_count=0
-            for a_data in tqdm(dataset[data_name]):
+            for a_data in tqdm(dataset[data_name]):     #test each question
                 
-                qainput=a_data['passage']+' Question='+a_data['question']
+                qainput=a_data['passage']+'\\n'+a_data['question']
                 options=a_data['options']
                 answer=a_data['answer']
                 index=a_data['answer_index']
@@ -78,16 +78,16 @@ def del_distractor_score():
                 #ori_score=uni_score.option_score(qainput,options)[index]
 
                 dis_index=[x for x in range(len(options))]
-                dis_index.remove(index)
+                dis_index.remove(index)         #remove the answer index so that we don't test without answer
 
                 cnt=len(dis_index)
                 for test in dis_index:
                     count+=1
                     test_option=copy.deepcopy(options)
-                    test_option.pop(test)
-                    sco=uni_score.option_score(qainput,test_option)
+                    test_option.pop(test)       #delete one distractor
+                    sco=uni_score.option_score(qainput,test_option)     #score without a distractor
                     ans_ids=0
-                    for i in range(len(test_option)):
+                    for i in range(len(test_option)):       #find the answer's new index
                         if test_option[i]==answer:
                             ans_ids=i
                     sco=list(sco)
@@ -106,8 +106,10 @@ def del_distractor_score():
         acc_score[model]=model_lib
     return acc_score
 KDA_score=KDA_passage_score()
-del_dis_score=del_distractor_score()
-output=[KDA_score,del_dis_score]
+#del_dis_score=del_distractor_score()
+output=[KDA_score]
+print(KDA_score)
+#print(del_dis_score)
 import json
-with open('scores.json','w',) as f:
+with open('./scores.json','w',) as f:
     a=json.dump(output,f,ensure_ascii=False,)
